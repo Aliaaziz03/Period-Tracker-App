@@ -1,12 +1,7 @@
-package com.example.individual1;
+package com.example.individual1 // Ensure this matches your package structure
 
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-import io.flutter.embedding.android.FlutterFragmentActivity;
-import android.os.Bundle;
-
-public class MainActivity extends FlutterFragmentActivity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
+class MainActivity: FlutterFragmentActivity() {
+    // No additional code is needed here for most Flutter apps.
 }

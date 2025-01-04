@@ -6,10 +6,9 @@ import 'package:individual1/AppsFlow/profile.dart';
 import 'package:individual1/authentication/register.dart';
 import 'auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:individual1/authentication/fingerprint.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:individual1/AppsFlow/Calendar.dart';
-
-
+import 'package:shared_preferences/shared_preferences.dart';  // Add shared_preferences import
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,62 +20,115 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   String? errorMessage = '';
   bool isLogin = true;
+  String? savedEmail = ''; // Variable to store the last used email
 
   final TextEditingController _controllerEmail = TextEditingController();
   final TextEditingController _controllerPassword = TextEditingController();
-
-  Future<void> signInWithEmailAndPassword() async {
-  if (_controllerEmail.text.isEmpty || !_controllerEmail.text.contains('@')) {
-    setState(() {
-      errorMessage = "Please enter a valid email.";
-    });
-    return;
-  }
-
-  if (_controllerPassword.text.isEmpty ||_controllerPassword.text.length < 6) {
-    setState(() {
-      errorMessage = "Password must be at least 6 characters.";
-    });
-    return;
-  }
-
-  try {
-      await Auth().signInWithEmailAndPassword(
-        email: _controllerEmail.text, 
-        password: _controllerPassword.text
-      );
-      Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) =>  PeriodSelectionScreen()),
-    );
-    } on FirebaseAuthException catch (e) {
-      
-      if (e.code == 'user-not-found') {
-      setState(() {
-        errorMessage = "No user found for this email. Please register first.";
-      });
-    } else if (e.code == 'wrong-password') {
-      setState(() {
-        errorMessage = "Incorrect password. Please try again.";
-      });
-    } else {
-      setState(() {
-        errorMessage = e.message ?? "An unknown error occurred.";
-      });
-    };
-
-    } catch (e) {
-    setState(() {
-      errorMessage = "An unexpected error occurred. Please try again.";
-    });
-  }
-
-  }
-
+  final LocalAuthentication _localAuth = LocalAuthentication();
 
   @override
-Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    _loadLastUsedEmail();  // Load the last used email when the page is created
+  }
+
+  // Load the last used email from shared preferences
+  Future<void> _loadLastUsedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      savedEmail = prefs.getString('lastUsedEmail') ?? '';  // Default to empty if not found
+      _controllerEmail.text = savedEmail ?? '';  // Set the email in the text field
+    });
+  }
+
+  /// Email & Password Login
+  Future<void> signInWithEmailAndPassword() async {
+    if (_controllerEmail.text.isEmpty || !_controllerEmail.text.contains('@')) {
+      setState(() {
+        errorMessage = "Please enter a valid email.";
+      });
+      return;
+    }
+
+    if (_controllerPassword.text.isEmpty || _controllerPassword.text.length < 6) {
+      setState(() {
+        errorMessage = "Password must be at least 6 characters.";
+      });
+      return;
+    }
+
+    try {
+      await Auth().signInWithEmailAndPassword(
+        email: _controllerEmail.text,
+        password: _controllerPassword.text,
+      );
+
+      // Store the email for future use
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setString('lastUsedEmail', _controllerEmail.text);
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => PeriodSelectionScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        setState(() {
+          errorMessage = "No user found for this email. Please register first.";
+        });
+      } else if (e.code == 'wrong-password') {
+        setState(() {
+          errorMessage = "Incorrect password. Please try again.";
+        });
+      } else {
+        setState(() {
+          errorMessage = e.message ?? "An unknown error occurred.";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "An unexpected error occurred. Please try again.";
+      });
+    }
+  }
+
+  /// Biometric Authentication
+  Future<void> _authenticateWithFingerprint() async {
+    try {
+      bool isBiometricAvailable = await _localAuth.canCheckBiometrics;
+      if (!isBiometricAvailable) {
+        setState(() {
+          errorMessage = "Fingerprint authentication is not available.";
+        });
+        return;
+      }
+
+      bool isAuthenticated = await _localAuth.authenticate(
+        localizedReason: 'Use your fingerprint to authenticate',
+        options: const AuthenticationOptions(biometricOnly: true),
+      );
+
+      if (isAuthenticated) {
+        // Navigate to the desired screen after successful authentication
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => PeriodSelectionScreen()),
+        );
+      } else {
+        setState(() {
+          errorMessage = "Fingerprint authentication failed.";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Error during authentication: $e";
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
- body: SafeArea(
+      body: SafeArea(
         child: Stack(
           children: [
             Container(
@@ -86,7 +138,7 @@ Widget build(BuildContext context) {
             ),
             Center(
               child: Container(
-                width: MediaQuery.of(context).size.width * 0.7, // Adjust width
+                width: MediaQuery.of(context).size.width * 0.9, // Adjust width
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -103,63 +155,53 @@ Widget build(BuildContext context) {
                   mainAxisSize: MainAxisSize.min, // Shrinks to fit content
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                Text(
-                  'LOGIN',
-                  style: GoogleFonts.patrickHand(
-                    fontSize: 40,
-                    color: Colors.pink,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                
-                Form(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 20),
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _controllerEmail, //create field
-                          keyboardType: TextInputType.emailAddress,
-                          
-                          style: GoogleFonts.patrickHand(),
-                          decoration: InputDecoration(
-                            labelText: 'Email',
-                            labelStyle: GoogleFonts.patrickHand(),
-                            hintText: 'Enter email',
-                            hintStyle: GoogleFonts.patrickHand(),
-                            prefixIcon: const Icon(Icons.email),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30.0),
+                    Text(
+                      'LOGIN',
+                      style: GoogleFonts.patrickHand(
+                        fontSize: 40,
+                        color: Colors.pink,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Form(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 20),
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _controllerEmail, // Email field
+                              keyboardType: TextInputType.emailAddress,
+                              style: GoogleFonts.patrickHand(),
+                              decoration: InputDecoration(
+                                labelText: 'Email',
+                                labelStyle: GoogleFonts.patrickHand(),
+                                hintText: 'Enter email',
+                                hintStyle: GoogleFonts.patrickHand(),
+                                prefixIcon: const Icon(Icons.email),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30.0),
+                                ),
+                              ),
                             ),
-                          ),
-                          onChanged: (String value) {},
-                          validator: (value) {
-                            return value!.isEmpty ? 'Please enter email' : null;
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        TextFormField(
-                          controller: _controllerPassword, //create field
-                          keyboardType: TextInputType.visiblePassword,
-                          obscureText: true,
-                          style: GoogleFonts.patrickHand(),
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            labelStyle: GoogleFonts.patrickHand(),
-                            hintText: 'Enter password',
-                            hintStyle: GoogleFonts.patrickHand(),
-                            prefixIcon: const Icon(Icons.lock),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30.0),
+                            const SizedBox(height: 20),
+                            TextFormField(
+                              controller: _controllerPassword, // Password field
+                              keyboardType: TextInputType.visiblePassword,
+                              obscureText: true,
+                              style: GoogleFonts.patrickHand(),
+                              decoration: InputDecoration(
+                                labelText: 'Password',
+                                labelStyle: GoogleFonts.patrickHand(),
+                                hintText: 'Enter password',
+                                hintStyle: GoogleFonts.patrickHand(),
+                                prefixIcon: const Icon(Icons.lock),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30.0),
+                                ),
+                              ),
                             ),
-                          ),
-                          onChanged: (String value) {},
-                          validator: (value) {
-                            return value!.isEmpty ? 'Please enter password' : null;
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                         if (errorMessage != null && errorMessage!.isNotEmpty)
+                            const SizedBox(height: 20),
+                            if (errorMessage != null && errorMessage!.isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 child: Text(
@@ -168,8 +210,7 @@ Widget build(BuildContext context) {
                                   textAlign: TextAlign.center,
                                 ),
                               ),
-             
-                          Padding(
+                            Padding(
                               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -192,9 +233,7 @@ Widget build(BuildContext context) {
                                         ],
                                       ),
                                       child: MaterialButton(
-                                        onPressed: () {
-                                          signInWithEmailAndPassword();
-                                        },
+                                        onPressed: signInWithEmailAndPassword,
                                         textColor: Colors.white,
                                         padding: const EdgeInsets.symmetric(vertical: 15),
                                         shape: RoundedRectangleBorder(
@@ -213,14 +252,28 @@ Widget build(BuildContext context) {
                                   const SizedBox(width: 10),
                                   IconButton(
                                     icon: const Icon(Icons.fingerprint, size: 40, color: Colors.pink),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => FingerprintAuthPage()),
-                                      );
-                                    },
+                                    onPressed: _authenticateWithFingerprint,
                                   ),
                                 ],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const RegisterPage()),
+                                );
+                              },
+                              child: Text(
+                                'Sign Up',
+                                style: GoogleFonts.patrickHand(
+                                  fontSize: 16,
+                                  color: Colors.pink,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Colors.pink,
+                                  decorationThickness: 2
+                                ),
                               ),
                             ),
                           ],

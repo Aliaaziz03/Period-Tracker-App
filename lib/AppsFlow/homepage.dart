@@ -18,15 +18,16 @@ class _HomePageState extends State<HomePage> {
   double crampsValue = 2;
   bool _hasSelectedMood = false;
   bool _isSnackbarActive = false;
+  bool _shakeCooldown = false;
   late StreamSubscription _accelerometerSubscription;
 
-  static const double shakeThreshold = 15.0;
+  static const double shakeThreshold = 7.0;
 
   @override
   void initState() {
     super.initState();
     _loadSavedValues();
-    _startShakeDetection();
+    _startShakeDetection(); // Start listening to shake events
     _showSnackbarPeriodically();
   }
 
@@ -55,15 +56,24 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Shake detection using sensors_plus
   void _startShakeDetection() {
     _accelerometerSubscription = accelerometerEvents.listen((event) {
+      if (_shakeCooldown) return; // Prevent frequent triggers during cooldown
+
+      // Calculate g-force
       double gX = event.x;
       double gY = event.y;
       double gZ = event.z;
 
-      double gForce = sqrt(gX * gX + gY * gY + gZ * gZ) - 9.8;
+      double gForce = sqrt(gX * gX + gY * gY + gZ * gZ) - 9.8; // Subtract gravity (9.8 m/s²)
+
       if (gForce > shakeThreshold && !_hasSelectedMood) {
-        _showMoodPrompt();
+        _shakeCooldown = true;
+        _showMoodPrompt(); // Trigger the mood prompt
+        Future.delayed(Duration(seconds: 2), () {
+          _shakeCooldown = false; // Cooldown period before detecting another shake
+        });
       }
     });
   }

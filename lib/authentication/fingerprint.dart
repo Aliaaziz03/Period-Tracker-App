@@ -8,9 +8,9 @@ class FingerprintAuthPage extends StatefulWidget {
 }
 
 class _FingerprintAuthPageState extends State<FingerprintAuthPage> {
-    String _daysLeft = '';
+  String _daysLeft = '';
 
-   // Method to update daysLeft value
+  // Method to update daysLeft value
   void updateDaysLeft(String daysLeft) {
     setState(() {
       _daysLeft = daysLeft;
@@ -40,7 +40,7 @@ class _FingerprintAuthPageState extends State<FingerprintAuthPage> {
         ),
       );
 
-       setState(() {
+      setState(() {
         _isAuthenticated = authenticated;
         _authMessage = authenticated
             ? "Authentication successful! Welcome."
@@ -51,7 +51,7 @@ class _FingerprintAuthPageState extends State<FingerprintAuthPage> {
         // Navigate to the HomePage after successful authentication
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(daysLeft: _daysLeft)), 
+          MaterialPageRoute(builder: (context) => HomePage(daysLeft: _daysLeft)),
         );
       }
     } catch (e) {
@@ -67,11 +67,11 @@ class _FingerprintAuthPageState extends State<FingerprintAuthPage> {
       appBar: AppBar(
         title: Text('Welcome'),
       ),
-  body: Container(
+      body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blue.shade200, Colors.blue.shade600], 
+            colors: [Colors.blue.shade200, Colors.blue.shade600],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -89,10 +89,13 @@ class _FingerprintAuthPageState extends State<FingerprintAuthPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.fingerprint,
-                      size: 100, 
-                      color: Colors.blue,
+                    GestureDetector(
+                      onTap: _authenticateWithFingerprint, // Start authentication on tap
+                      child: Icon(
+                        Icons.fingerprint,
+                        size: 100,
+                        color: Colors.blue,
+                      ),
                     ),
                     SizedBox(height: 20),
                     Text(
@@ -103,26 +106,6 @@ class _FingerprintAuthPageState extends State<FingerprintAuthPage> {
                         color: Colors.black87,
                       ),
                       textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 30),
-                    ElevatedButton(
-                      onPressed: _authenticateWithFingerprint,
-                      child: Text(
-                        _isAuthenticated ? "Authenticated!" : "Authenticate",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue, 
-                        foregroundColor: Colors.white,
-                        minimumSize: Size(200, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30), // Rounded button
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      ),
                     ),
                   ],
                 ),

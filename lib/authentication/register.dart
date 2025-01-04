@@ -90,7 +90,7 @@ Future<void> createUserWithEmailAndPassword() async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.grey,
+        backgroundColor: Colors.pink.withOpacity(0.4),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios,color: Colors.black),
            onPressed: () {
@@ -106,7 +106,7 @@ Future<void> createUserWithEmailAndPassword() async {
             Container(
               width: double.infinity,
               height: double.infinity,
-              color: Colors.white, // Background color
+              color: Colors.pink.withOpacity(0.1), // Background color
             ),
 
             Positioned(
@@ -115,8 +115,8 @@ Future<void> createUserWithEmailAndPassword() async {
             right: 0,
             child: Container(
               height: 400, // Adjust this height as per your need
-              decoration: const BoxDecoration(
-                color: Colors.grey,
+              decoration:  BoxDecoration(
+                color: Colors.pink.withOpacity(0.4),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
@@ -124,7 +124,7 @@ Future<void> createUserWithEmailAndPassword() async {
 
             Center(
               child: Container(
-                width: MediaQuery.of(context).size.width * 0.7, // Adjust width
+                width: MediaQuery.of(context).size.width * 0.9, // Adjust width
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -145,7 +145,7 @@ Future<void> createUserWithEmailAndPassword() async {
                       'Sign Up',
                       style: GoogleFonts.patrickHand(
                         fontSize: 40,
-                        color: const Color.fromARGB(255, 81, 58, 145),
+                        color: Colors.pink,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -246,7 +246,7 @@ Future<void> createUserWithEmailAndPassword() async {
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Colors.deepPurple, Colors.purpleAccent],
+                                    colors: [Color.fromARGB(255, 175, 69, 105), Color.fromARGB(255, 228, 157, 181)],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
