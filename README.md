@@ -1,16 +1,24 @@
-# individual1
+# 📱 Period Tracker App
 
-A new Flutter project.
+## 📌 Overview
+A Flutter-based mobile application that helps users track menstrual cycles,
+log moods, and securely store personal data using Firebase.
 
-## Getting Started
+## 🎯 Purpose
+- Help users monitor menstrual health
+- Provide privacy-focused mobile tracking
+- Encourage consistent health logging
 
-This project is a starting point for a Flutter application.
+## 🛠 Technologies Used
+- Flutter & Dart
+- Firebase Authentication
+- Cloud Firestore
+- Biometric Authentication
+- Accelerometer Sensors
 
-A few resources to get you started if this is your first Flutter project:
+## ✨ Features
+- Secure login using biometrics
+- Cycle tracking & predictions
+- Mood logging via device sensors
+- Firebase cloud data storage
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
